@@ -6,9 +6,9 @@ use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use IDangerous\PhoneOtpVerification\Model\OtpManager;
 use IDangerous\PhoneOtpVerification\Helper\Customer as CustomerHelper;
 use IDangerous\PhoneOtpVerification\Helper\CustomerGraphql as CustomerGraphqlHelper;
+use IDangerous\PhoneOtpVerification\Model\OtpManager;
 use Magento\Customer\Model\Session;
 use Psr\Log\LoggerInterface;
 use Magento\Framework\App\State;
@@ -98,7 +98,7 @@ class VerifyPhoneOtp implements ResolverInterface
             throw new GraphQlInputException(__('OTP code cannot be empty.'));
         }
 
-                try {
+        try {
             // Set area code for GraphQL context
             if (!$this->appState->getAreaCode()) {
                 $this->appState->setAreaCode(\Magento\Framework\App\Area::AREA_GRAPHQL);

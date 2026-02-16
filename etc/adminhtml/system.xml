@@ -65,6 +65,24 @@
                     <comment translate="true">Optional. This text is shown in the address/checkout OTP modal to explain why verification is required.</comment>
                 </field>
             </group>
+            <group id="app_version" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Headless App Version Gate</label>
+                <comment><![CDATA[Minimum app version. If set and app version is missing/low, OTP is NOT enforced (user can proceed). Empty = enforce OTP for all.]]></comment>
+                <field id="min_version_address_checkout" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Min Version (Address &amp; Checkout OTP)</label>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                    <comment><![CDATA[e.g. 4.0.18 or 4.0.18+86 (build). If set and app version &lt; this, OTP is skipped. Empty = enforce for all.]]></comment>
+                </field>
+                <field id="min_version_registration_account" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Min Version (Registration &amp; Account OTP)</label>
+                    <depends>
+                        <field id="enabled">1</field>
+                    </depends>
+                    <comment><![CDATA[e.g. 4.0.18 or 4.0.18+86 (build). If set and app version &lt; this, OTP is skipped. Empty = enforce for all.]]></comment>
+                </field>
+            </group>
         </section>
     </system>
 </config>

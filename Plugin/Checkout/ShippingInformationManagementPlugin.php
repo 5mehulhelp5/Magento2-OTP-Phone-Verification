@@ -4,6 +4,7 @@ namespace IDangerous\PhoneOtpVerification\Plugin\Checkout;
 use Magento\Checkout\Api\Data\ShippingInformationInterface;
 use Magento\Checkout\Model\ShippingInformationManagement;
 use Magento\Framework\Exception\LocalizedException;
+use IDangerous\PhoneOtpVerification\Helper\AppVersionChecker;
 use IDangerous\PhoneOtpVerification\Helper\Customer as CustomerHelper;
 use IDangerous\PhoneOtpVerification\Helper\Config as ConfigHelper;
 use IDangerous\PhoneOtpVerification\Model\PhoneVerificationTokenManager;
@@ -51,6 +52,11 @@ class ShippingInformationManagementPlugin
     private $tokenManager;
 
     /**
+     * @var AppVersionChecker
+     */
+    private $appVersionChecker;
+
+    /**
      * @param CustomerHelper $customerHelper
      * @param Session $customerSession
      * @param RequestInterface $request
@@ -64,7 +70,8 @@ class ShippingInformationManagementPlugin
         CartRepositoryInterface $cartRepository,
         AddressRepositoryInterface $addressRepository,
         ConfigHelper $configHelper,
-        PhoneVerificationTokenManager $tokenManager
+        PhoneVerificationTokenManager $tokenManager,
+        AppVersionChecker $appVersionChecker
     ) {
         $this->customerHelper = $customerHelper;
         $this->customerSession = $customerSession;
@@ -73,6 +80,7 @@ class ShippingInformationManagementPlugin
         $this->addressRepository = $addressRepository;
         $this->configHelper = $configHelper;
         $this->tokenManager = $tokenManager;
+        $this->appVersionChecker = $appVersionChecker;
     }
 
     /**
@@ -89,6 +97,11 @@ class ShippingInformationManagementPlugin
         $cartId,
         ShippingInformationInterface $addressInformation
     ) {
+        // Sürüm düşük/eksikse OTP zorunluluğunu uygulama, kullanıcıyı engelleme
+        if (!$this->appVersionChecker->isAllowedForAddressCheckout()) {
+            return [$cartId, $addressInformation];
+        }
+
         $quote = $this->cartRepository->get($cartId);
         $customerId = (int)$quote->getCustomerId();
 

@@ -2,6 +2,7 @@
 
 namespace IDangerous\PhoneOtpVerification\Plugin\GraphQl;
 
+use IDangerous\PhoneOtpVerification\Helper\AppVersionChecker;
 use Magento\CustomerGraphQl\Model\Customer\CreateCustomerAccount;
 use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Customer\Model\Session;
@@ -27,6 +28,11 @@ class CreateCustomerPlugin
     private $cache;
 
     /**
+     * @var AppVersionChecker
+     */
+    private $appVersionChecker;
+
+    /**
      * @param Session $customerSession
      * @param LoggerInterface $logger
      * @param CacheInterface $cache
@@ -34,11 +40,13 @@ class CreateCustomerPlugin
     public function __construct(
         Session $customerSession,
         LoggerInterface $logger,
-        CacheInterface $cache
+        CacheInterface $cache,
+        AppVersionChecker $appVersionChecker
     ) {
         $this->customerSession = $customerSession;
         $this->logger = $logger;
         $this->cache = $cache;
+        $this->appVersionChecker = $appVersionChecker;
     }
 
     /**
@@ -55,6 +63,11 @@ class CreateCustomerPlugin
         array $customerData,
         StoreInterface $store
     ): array {
+        // Sürüm düşük/eksikse OTP zorunluluğunu uygulama, kayda izin ver
+        if (!$this->appVersionChecker->isAllowedForRegistrationAccount()) {
+            return [$customerData, $store];
+        }
+
         $this->logger->info('GraphQL CreateCustomer: Customer data received: ' . json_encode($customerData));
 
         $phoneNumber = null;

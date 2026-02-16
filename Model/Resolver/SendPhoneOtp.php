@@ -71,7 +71,7 @@ class SendPhoneOtp implements ResolverInterface
             throw new GraphQlInputException(__('Phone number cannot be empty.'));
         }
 
-                try {
+        try {
             // Set area code for GraphQL context
             if (!$this->appState->getAreaCode()) {
                 $this->appState->setAreaCode(\Magento\Framework\App\Area::AREA_GRAPHQL);

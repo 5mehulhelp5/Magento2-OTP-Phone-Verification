@@ -5,6 +5,7 @@ use Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Customer\Api\Data\AddressInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Phrase;
+use IDangerous\PhoneOtpVerification\Helper\AppVersionChecker;
 use IDangerous\PhoneOtpVerification\Helper\Customer as CustomerHelper;
 use IDangerous\PhoneOtpVerification\Helper\Config as ConfigHelper;
 use IDangerous\PhoneOtpVerification\Model\PhoneVerificationTokenManager;
@@ -51,6 +52,11 @@ class AddressRepositoryPlugin
     private $appState;
 
     /**
+     * @var AppVersionChecker
+     */
+    private $appVersionChecker;
+
+    /**
      * @param CustomerHelper $customerHelper
      * @param Session $customerSession
      * @param RequestInterface $request
@@ -63,7 +69,8 @@ class AddressRepositoryPlugin
         LoggerInterface $logger,
         PhoneVerificationTokenManager $tokenManager,
         ConfigHelper $configHelper,
-        State $appState
+        State $appState,
+        AppVersionChecker $appVersionChecker
     ) {
         $this->customerHelper = $customerHelper;
         $this->customerSession = $customerSession;
@@ -72,6 +79,7 @@ class AddressRepositoryPlugin
         $this->tokenManager = $tokenManager;
         $this->configHelper = $configHelper;
         $this->appState = $appState;
+        $this->appVersionChecker = $appVersionChecker;
     }
 
     /**
@@ -91,6 +99,11 @@ class AddressRepositoryPlugin
             'telephone' => $address->getTelephone(),
             'customer_id' => $address->getCustomerId()
         ]);
+
+        // Sürüm düşük/eksikse OTP zorunluluğunu uygulama, kullanıcıyı engelleme
+        if (!$this->appVersionChecker->isAllowedForAddressCheckout()) {
+            return [$address];
+        }
 
         try {
             // Check if phone verification is required for this address

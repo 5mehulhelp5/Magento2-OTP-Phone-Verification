@@ -94,6 +94,37 @@ php bin/magento cache:clean
      * **Require Phone Verification for New Addresses**
      * **Require Verification for Unverified Existing Addresses**
 
+4. Headless App Version Gate (optional):
+   * Admin > Stores > Configuration > IDangerous > Phone OTP Verification > Headless App Version Gate
+     * **Min Version (Address & Checkout OTP)** – e.g. `4.0.18`. If set, only apps with version ≥ this can use address/checkout OTP (SendAddressPhoneOtp, VerifyAddressPhoneOtp, shipping-information, address save). **Empty = no check.**
+     * **Min Version (Registration & Account OTP)** – e.g. `4.0.18`. If set, only apps with version ≥ this can use registration/account OTP (SendPhoneOtp, VerifyPhoneOtp, createCustomer). **Empty = no check.**
+
+## Headless App Version Gate
+
+> **Note:** This version gate is intended for use during the transition period (so older app versions can proceed without verification). **Permanent use is not recommended.**
+
+For headless/mobile apps, the module can enforce a minimum app version before performing OTP operations. **If the configured min version is empty, no check is applied** and all requests are allowed.
+
+**Behavior:**
+- **Version null/empty in config** → OTP enforced normally for all requests.
+- **Version set in config + app version OK** → OTP enforced normally.
+- **Version set in config + app version missing/low** → **Pull back**: OTP is NOT enforced, user is NOT blocked. Checkout and address save proceed without verification.
+
+**How to send version (REST and GraphQL):**
+
+| Method | REST | GraphQL |
+|--------|------|---------|
+| **Header** | `X-App-Version: 4.0.18` | Same header on the GraphQL HTTP request |
+| **Query param** | `?mobVer=4.0.18` or `?appVersion=4.0.18` | N/A (use header) |
+
+The version string supports semantic format with optional build number (e.g. `4.0.18`, `4.0.18+86`). Build numbers are compared when both config and client send them; client without build is treated as build 0.
+
+**Scopes:**
+- **Address & Checkout OTP**: SendAddressPhoneOtp, VerifyAddressPhoneOtp, shipping-information REST, address save (GraphQL/REST)
+- **Registration & Account OTP**: SendPhoneOtp, VerifyPhoneOtp, createCustomer (GraphQL)
+
+Version check applies **only to API requests** (GraphQL, REST). Web storefront requests (address form, checkout page) are **not** checked.
+
 ## Address Phone Verification (My Account + Checkout)
 
 When enabled, customers must verify phone numbers used on addresses (if telephone is present):

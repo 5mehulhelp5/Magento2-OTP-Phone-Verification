@@ -35,6 +35,11 @@ To “prove verification” across these calls, backend supports a short-lived t
 - Header: `X-Phone-Verification-Token: <token>`
 - TTL: ~5 minutes
 
+### App version gate (optional)
+Admin may configure minimum app versions. If set and app version is missing or lower:
+- **OTP is NOT enforced** – user can complete checkout and address save without verification.
+- App should send version to get full OTP flow: `X-App-Version: 4.0.18` (header) or `mobVer=4.0.18` (REST query param).
+
 ---
 
 ## 2) GraphQL operations (OTP for address/checkout)

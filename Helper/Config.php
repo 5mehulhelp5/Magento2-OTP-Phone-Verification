@@ -13,6 +13,8 @@ class Config extends AbstractHelper
     const XML_PATH_ENABLE_ADDRESS_PHONE_VERIFICATION = 'phone_otp/address/enable_address_phone_verification';
     const XML_PATH_REQUIRE_UNVERIFIED_ADDRESS_VERIFICATION = 'phone_otp/address/require_unverified_address_verification';
     const XML_PATH_ADDRESS_OTP_MODAL_NOTE = 'phone_otp/address/address_otp_modal_note';
+    const XML_PATH_MIN_VERSION_ADDRESS_CHECKOUT = 'phone_otp/app_version/min_version_address_checkout';
+    const XML_PATH_MIN_VERSION_REGISTRATION_ACCOUNT = 'phone_otp/app_version/min_version_registration_account';
 
     public function isEnabled($store = null)
     {
@@ -79,5 +81,29 @@ class Config extends AbstractHelper
         );
 
         return trim($note);
+    }
+
+    /**
+     * Min required app version for address/checkout OTP. Empty = no check.
+     */
+    public function getMinVersionAddressCheckout($store = null): string
+    {
+        return trim((string)$this->scopeConfig->getValue(
+            self::XML_PATH_MIN_VERSION_ADDRESS_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        ));
+    }
+
+    /**
+     * Min required app version for registration/account OTP. Empty = no check.
+     */
+    public function getMinVersionRegistrationAccount($store = null): string
+    {
+        return trim((string)$this->scopeConfig->getValue(
+            self::XML_PATH_MIN_VERSION_REGISTRATION_ACCOUNT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        ));
     }
 }
