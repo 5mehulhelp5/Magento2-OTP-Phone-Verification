@@ -59,7 +59,7 @@ mkdir -p app/code/IDangerous/NetgsmIYS
 # Clone Netgsm-IYS-module from GitHub
 
 # Install NetGsm SMS Module
-mdkir -p app/code/IDangerous/Sms
+mkdir -p app/code/IDangerous/Sms
 # Clone Netgsm-SMS-module from GitHub
 ```
 
@@ -106,9 +106,13 @@ php bin/magento cache:clean
 For headless/mobile apps, the module can enforce a minimum app version before performing OTP operations. **If the configured min version is empty, no check is applied** and all requests are allowed.
 
 **Behavior:**
-- **Version null/empty in config** → OTP enforced normally for all requests.
-- **Version set in config + app version OK** → OTP enforced normally.
-- **Version set in config + app version missing/low** → **Pull back**: OTP is NOT enforced, user is NOT blocked. Checkout and address save proceed without verification.
+- **Website** (frontend veya REST + Origin/Referer store domain içeriyorsa) → Version kontrolü yok, OTP her zaman zorunlu.
+- **Mobil app** (REST/GraphQL, Origin/Referer yok veya store dışı) → "Version yoksa OTP uygulanmaz" kuralı:
+  - **Version null/empty in config** → OTP enforced normally.
+  - **Version set + client version OK** → OTP enforced.
+  - **Version set + client version missing/low** → **Pull back**: OTP not enforced, user proceeds without verification.
+
+**Distinction:** Website checkout uses REST API; we detect it via Origin/Referer headers (contains store domain). Version rule applies only to non-website API requests (mobil app).
 
 **How to send version (REST and GraphQL):**
 
@@ -117,13 +121,26 @@ For headless/mobile apps, the module can enforce a minimum app version before pe
 | **Header** | `X-App-Version: 4.0.18` | Same header on the GraphQL HTTP request |
 | **Query param** | `?mobVer=4.0.18` or `?appVersion=4.0.18` | N/A (use header) |
 
+
 The version string supports semantic format with optional build number (e.g. `4.0.18`, `4.0.18+86`). Build numbers are compared when both config and client send them; client without build is treated as build 0.
 
 **Scopes:**
 - **Address & Checkout OTP**: SendAddressPhoneOtp, VerifyAddressPhoneOtp, shipping-information REST, address save (GraphQL/REST)
 - **Registration & Account OTP**: SendPhoneOtp, VerifyPhoneOtp, createCustomer (GraphQL)
 
-Version check applies **only to API requests** (GraphQL, REST). Web storefront requests (address form, checkout page) are **not** checked.
+## OTP Verification Scope (When OTP Is Required)
+
+OTP is enforced **only when the user explicitly saves or updates an address**:
+
+| Context | OTP Required |
+|---------|--------------|
+| **POST /rest/.../carts/mine** (create empty cart) | No |
+| **POST /rest/.../carts/mine/shipping-information** | Yes |
+| **GraphQL createCustomerAddress / updateCustomerAddress** | Yes |
+| **My Account > Address Book** (form save) | Yes |
+| **Checkout** (selected address with unverified phone) | Yes |
+
+Cart creation and other internal quote operations do not trigger OTP verification.
 
 ## Address Phone Verification (My Account + Checkout)
 
@@ -310,6 +327,12 @@ Generate translation files:
 ```bash
 php bin/magento i18n:collect-phrases -o "app/code/IDangerous/PhoneOtpVerification/i18n/dictionary.csv" app/code/IDangerous/PhoneOtpVerification
 ```
+
+## Changelog
+
+### v1.0.1
+- **OTP scope fix**: OTP is no longer required when creating an empty cart (`POST /rest/.../carts/mine`). Verification runs only for explicit address save (shipping-information, address book, GraphQL address mutations).
+- **Version gate fix**: Website (frontend + REST with Origin/Referer from store) never has version check; OTP always enforced. Mobil app REST/GraphQL: if version missing/low → pull back (OTP not enforced).
 
 ## Support
 

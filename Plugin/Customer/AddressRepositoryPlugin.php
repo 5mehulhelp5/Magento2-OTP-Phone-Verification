@@ -5,6 +5,7 @@ use Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Customer\Api\Data\AddressInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Phrase;
+use IDangerous\PhoneOtpVerification\Helper\AddressSaveContext;
 use IDangerous\PhoneOtpVerification\Helper\AppVersionChecker;
 use IDangerous\PhoneOtpVerification\Helper\Customer as CustomerHelper;
 use IDangerous\PhoneOtpVerification\Helper\Config as ConfigHelper;
@@ -57,6 +58,11 @@ class AddressRepositoryPlugin
     private $appVersionChecker;
 
     /**
+     * @var AddressSaveContext
+     */
+    private $addressSaveContext;
+
+    /**
      * @param CustomerHelper $customerHelper
      * @param Session $customerSession
      * @param RequestInterface $request
@@ -70,7 +76,8 @@ class AddressRepositoryPlugin
         PhoneVerificationTokenManager $tokenManager,
         ConfigHelper $configHelper,
         State $appState,
-        AppVersionChecker $appVersionChecker
+        AppVersionChecker $appVersionChecker,
+        AddressSaveContext $addressSaveContext
     ) {
         $this->customerHelper = $customerHelper;
         $this->customerSession = $customerSession;
@@ -80,6 +87,7 @@ class AddressRepositoryPlugin
         $this->configHelper = $configHelper;
         $this->appState = $appState;
         $this->appVersionChecker = $appVersionChecker;
+        $this->addressSaveContext = $addressSaveContext;
     }
 
     /**
@@ -99,6 +107,13 @@ class AddressRepositoryPlugin
             'telephone' => $address->getTelephone(),
             'customer_id' => $address->getCustomerId()
         ]);
+
+        // OTP sadece açık adres kaydı/shipping-information bağlamında tetiklensin
+        // (sepet oluşturma, quote sync vb. dahil değil)
+        if (!$this->addressSaveContext->isExplicitAddressSave()) {
+            $this->logger->info('AddressRepositoryPlugin::beforeSave - Skip (not explicit address save context)');
+            return [$address];
+        }
 
         // Sürüm düşük/eksikse OTP zorunluluğunu uygulama, kullanıcıyı engelleme
         if (!$this->appVersionChecker->isAllowedForAddressCheckout()) {

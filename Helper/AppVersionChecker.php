@@ -18,7 +18,6 @@ class AppVersionChecker
     private const HEADER_VERSION = 'X-App-Version';
     private const PARAM_VERSION = 'mobVer'; // common mobile param
     private const PARAM_ALT = 'appVersion';
-
     /** @var Config */
     private $configHelper;
 
@@ -42,7 +41,7 @@ class AppVersionChecker
     public const REJECTION_MESSAGE = 'App update required. Please update to the latest version.';
 
     /**
-     * Whether the current request is from API (GraphQL or REST). Frontend requests skip version check.
+     * Whether the current request is from API (GraphQL or REST).
      */
     public function isApiRequest(): bool
     {
@@ -72,23 +71,49 @@ class AppVersionChecker
         return $this->check('registration_account');
     }
 
+    /**
+     * API isteği store'un kendi sayfasından (Origin/Referer) geliyorsa = website checkout.
+     * Mobil app bu header'ları göndermez veya farklı gönderir.
+     */
+    private function isWebsiteApiRequest(): bool
+    {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        if ($host === '') {
+            return false;
+        }
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        $hostLower = strtolower($host);
+        $originLower = strtolower($origin);
+        $refererLower = strtolower($referer);
+        return (strpos($originLower, $hostLower) !== false) || (strpos($refererLower, $hostLower) !== false);
+    }
+
     private function check(string $scope): bool
     {
+        // Website (frontend/MVC): version kontrolü hiç uygulanmaz, OTP her zaman zorunlu
         if (!$this->isApiRequest()) {
-            return true; // frontend: no version gate
+            return true;
         }
 
+        // API ama website checkout'tan (Origin/Referer = store domain) → version kontrolü yok, OTP zorunlu
+        if ($this->isWebsiteApiRequest()) {
+            return true;
+        }
+
+        // REST/GraphQL (mobil app): "version yoksa OTP uygulanmaz" kuralı geçerli
         $minVersion = $scope === 'address_checkout'
             ? $this->configHelper->getMinVersionAddressCheckout()
             : $this->configHelper->getMinVersionRegistrationAccount();
 
         if ($minVersion === '') {
-            return true; // no check, all operations allowed
+            return true;
         }
 
         $clientVersion = $this->getClientVersion();
+        // Version gönderilmedi → pull back (OTP zorunlu değil)
         if ($clientVersion === '') {
-            return false; // version required but not sent → pull back
+            return false;
         }
 
         return $this->isVersionAtLeast($clientVersion, $minVersion);

@@ -31,6 +31,16 @@
         <plugin name="phone_verification_shipping_information" type="IDangerous\PhoneOtpVerification\Plugin\Checkout\ShippingInformationManagementPlugin" />
     </type>
 
+    <!-- GraphQL: Set explicit address save context for createCustomerAddress -->
+    <type name="Magento\CustomerGraphQl\Model\Customer\Address\CreateCustomerAddress">
+        <plugin name="phone_otp_set_explicit_address_context_create" type="IDangerous\PhoneOtpVerification\Plugin\GraphQl\SetExplicitAddressContextPlugin" />
+    </type>
+
+    <!-- GraphQL: Set explicit address save context for updateCustomerAddress -->
+    <type name="Magento\CustomerGraphQl\Model\Customer\Address\UpdateCustomerAddress">
+        <plugin name="phone_otp_set_explicit_address_context_update" type="IDangerous\PhoneOtpVerification\Plugin\GraphQl\SetExplicitAddressContextUpdatePlugin" />
+    </type>
+
     <!-- Customer Address Data Formatter Plugin - DISABLED to prevent phone_verified from being copied to quote -->
     <!-- <type name="Magento\Customer\Model\Address\CustomerAddressDataFormatter">
         <plugin name="phone_verification_address_data" type="IDangerous\PhoneOtpVerification\Plugin\Customer\Address\CustomerAddressDataProviderPlugin" />
