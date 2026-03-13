@@ -102,6 +102,7 @@ define([
     var modalInitialized = false;
     var otpModalInstance = null;
     var verificationInProgress = false;
+    var currentOtpDeferred = null;
 
     function ensureCheckoutModalDom() {
         var $modal = $('#checkout-otp-modal');
@@ -165,7 +166,14 @@ define([
             innerScroll: true,
             title: $t('Phone Verification Required'),
             buttons: [],
-            modalClass: 'checkout-otp-modal'
+            modalClass: 'checkout-otp-modal',
+            closed: function () {
+                if (currentOtpDeferred && currentOtpDeferred.state() === 'pending') {
+                    currentOtpDeferred.reject(new Error('Modal closed without verification'));
+                    verificationInProgress = false;
+                }
+                currentOtpDeferred = null;
+            }
         }, $modal);
 
         modalInitialized = true;
@@ -311,6 +319,7 @@ define([
         });
 
         resetUi();
+        currentOtpDeferred = deferred;
         if (otpModalInstance) {
             otpModalInstance.openModal();
             // auto send OTP when opened
@@ -320,6 +329,7 @@ define([
                 }
             }, 250);
         } else {
+            currentOtpDeferred = null;
             deferred.reject(new Error('Modal init failed'));
         }
 
